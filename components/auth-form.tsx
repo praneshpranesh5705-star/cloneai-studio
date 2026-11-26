@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -10,7 +10,6 @@ type AuthFormProps = { mode: "login" | "signup" };
 
 export default function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -38,6 +37,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
         });
         if (authError) throw authError;
         if (data.session) {
+          await supabase.from("profiles").upsert({ id: data.user.id, display_name: name.trim() });
           router.replace("/");
           router.refresh();
         } else {
@@ -46,7 +46,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
       } else {
         const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
         if (authError) throw authError;
-        const next = searchParams.get("next");
+        const next = new URLSearchParams(window.location.search).get("next");
         router.replace(next && next.startsWith("/") ? next : "/");
         router.refresh();
       }
