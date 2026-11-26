@@ -47,7 +47,11 @@ export default function AuthForm({ mode }: AuthFormProps) {
         const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
         if (authError) throw authError;
         const next = new URLSearchParams(window.location.search).get("next");
-        router.replace(next && next.startsWith("/") ? next : "/");
+        // Only allow same-origin paths. A bare startsWith("/") also accepts
+        // "//evil.com", which the browser treats as protocol-relative and
+        // would navigate off-site after login.
+        const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+        router.replace(safeNext);
         router.refresh();
       }
     } catch (cause) {

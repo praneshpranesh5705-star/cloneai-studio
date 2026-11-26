@@ -63,6 +63,10 @@ Open http://localhost:3000. Without Supabase configured you will see a setup scr
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Unit tests for retrieval, prompt assembly and validation |
 
+> **Node version.** Use Node 22 or newer. `@supabase/supabase-js` prints a
+deprecation warning on Node 20 and will stop supporting it. The build works on
+20 today; 22 is what you should deploy on.
+
 ## Project layout
 
 ```
@@ -77,6 +81,7 @@ app/
   studios/[slug]/               Honest "not built yet" pages
   setup/                        Shown when Supabase env vars are missing
   login/ signup/                Auth screens
+  robots.ts sitemap.ts          Crawler rules — public pages only
   api/
     chat/route.ts               Streaming NDJSON chat endpoint
     agents/route.ts             List + create
@@ -95,8 +100,10 @@ lib/
   data.ts                       Server-side queries
   types.ts                      Shared types
 supabase/schema.sql             The whole database, idempotent
+supabase/profiles.sql           Legacy, optional — schema.sql already covers it
 tests/logic.test.ts             24 unit tests
 middleware.ts                   Session refresh + route protection
+AUDIT.md                        What was verified, and what was fixed
 ```
 
 ## How the chat works
@@ -128,4 +135,9 @@ Verified by running the schema against Postgres 15 and attacking it: an authenti
 
 ## License
 
-None specified. Add one before distributing.
+MIT — see [LICENSE](./LICENSE).
+
+## Audit log
+
+This repository was re-verified end to end on 2026-11-26. What was checked and
+what was found is recorded in [AUDIT.md](./AUDIT.md).
