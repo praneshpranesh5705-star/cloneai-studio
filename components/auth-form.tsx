@@ -15,6 +15,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const isSignup = mode === "signup";
@@ -24,6 +26,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
     setBusy(true);
     setError("");
     setMessage("");
+    setNeedsConfirmation(false);
     try {
       const supabase = createClient();
       if (isSignup) {
@@ -55,9 +58,42 @@ export default function AuthForm({ mode }: AuthFormProps) {
         router.refresh();
       }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Something went wrong. Please try again.");
+      const authError = cause as { message?: string; code?: string };
+      const message = authError.message ?? "Something went wrong. Please try again.";
+      setError(message);
+      if (
+        !isSignup &&
+        (authError.code === "email_not_confirmed" || /email not confirmed/i.test(message))
+      ) {
+        setNeedsConfirmation(true);
+      }
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function resendConfirmation() {
+    if (!email.trim()) {
+      setError("Enter your email address first.");
+      return;
+    }
+    setResending(true);
+    setError("");
+    setMessage("");
+    try {
+      const supabase = createClient();
+      const { error: resendError } = await supabase.auth.resend({
+        type: "signup",
+        email: email.trim(),
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (resendError) throw resendError;
+      setMessage("Confirmation email sent. Check your inbox and spam folder.");
+      setNeedsConfirmation(false);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not resend the confirmation email. Please try again.");
+    } finally {
+      setResending(false);
     }
   }
 
@@ -135,6 +171,16 @@ export default function AuthForm({ mode }: AuthFormProps) {
           <button className="auth-submit" type="submit" disabled={busy}>
             {busy ? "Please wait…" : isSignup ? "Create account" : "Sign in"} <ArrowRight size={17} />
           </button>
+          {needsConfirmation && (
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={resendConfirmation}
+              disabled={resending}
+            >
+              {resending ? "Sending confirmation…" : "Resend confirmation email"}
+            </button>
+          )}
         </form>
         <div className="auth-switch">
           {isSignup ? "Already have an account?" : "New to CloneAI Studio?"}{" "}
