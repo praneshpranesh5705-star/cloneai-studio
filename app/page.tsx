@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import {
-  Activity, ArrowDownRight, ArrowUpRight, AudioLines, Bot, Boxes, ChevronDown,
+  Activity, ArrowUpRight, AudioLines, Bot, Boxes, ChevronDown,
   CircleHelp, Command, CreditCard, FileCode2, Globe2, LayoutDashboard, Plus,
   Search, Settings2, ShieldCheck, Sparkles, WandSparkles, Workflow, Zap,
   Menu, Bell, Play, Clock3, MoreHorizontal, Image as ImageIcon
