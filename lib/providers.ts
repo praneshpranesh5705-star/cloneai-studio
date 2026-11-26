@@ -102,7 +102,6 @@ async function* streamAnthropic(req: StreamRequest, key: string): AsyncGenerator
       model: req.model,
       system: req.system,
       max_tokens: req.maxTokens,
-      temperature: req.temperature,
       stream: true,
       messages: req.messages,
     }),

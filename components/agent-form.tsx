@@ -40,7 +40,16 @@ export default function AgentForm({
   available: ProviderId[];
 }) {
   const router = useRouter();
-  const [values, setValues] = useState<AgentFormValues>({ ...EMPTY, ...initial });
+  const [values, setValues] = useState<AgentFormValues>(() => {
+    const base = { ...EMPTY, ...initial };
+    // Prefer a configured real provider for new agents instead of silently
+    // creating demo agents when the workspace already has working API keys.
+    if (mode === "create" && !initial?.provider) {
+      const firstConfigured = available.find((id) => id !== "demo") ?? "demo";
+      return { ...base, provider: firstConfigured, model: PROVIDERS[firstConfigured].defaultModel };
+    }
+    return base;
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState("");
   const [busy, setBusy] = useState(false);
