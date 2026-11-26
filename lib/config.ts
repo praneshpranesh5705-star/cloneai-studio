@@ -31,7 +31,7 @@ export const PROVIDERS: Record<
   anthropic: {
     label: "Anthropic",
     envKey: "ANTHROPIC_API_KEY",
-    defaultModel: "claude-haiku-5-5",
+    defaultModel: "claude-haiku-4-5-20251001",
     docs: "https://console.anthropic.com/settings/keys",
   },
   gemini: {
