@@ -1,10 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { supabaseKey, supabaseUrl } from "../config";
 
 export async function createClient() {
   const cookieStore = await cookies();
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  // Read through config.ts so the ANON_KEY fallback is honoured here too.
+  // Reading the env vars directly used to make this throw for anyone who
+  // followed the older Supabase docs and set NEXT_PUBLIC_SUPABASE_ANON_KEY.
+  const url = supabaseUrl();
+  const key = supabaseKey();
   if (!url || !key) throw new Error("Supabase is not configured.");
 
   return createServerClient(url, key, {
