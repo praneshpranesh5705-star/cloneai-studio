@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Mail, Sparkles, ShieldCheck } from "lucide-react";
+import { ArrowRight, Mail, Sparkles, ShieldCheck, UserRound } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 type AuthFormProps = { mode: "login" | "signup" };
@@ -13,6 +13,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [guestBusy, setGuestBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -43,6 +44,30 @@ export default function AuthForm({ mode }: AuthFormProps) {
     }
   }
 
+  async function continueAsGuest() {
+    setGuestBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInAnonymously({
+        options: { data: { display_name: "Guest" } },
+      });
+      if (authError) throw authError;
+      router.replace("/");
+      router.refresh();
+    } catch (cause) {
+      const detail = cause instanceof Error ? cause.message : "";
+      setError(
+        detail.toLowerCase().includes("anonymous")
+          ? "Guest access is not enabled in Supabase yet. In Supabase Dashboard, open Authentication → Sign In / Providers → Anonymous Sign-Ins and enable it, then try again."
+          : detail || "Could not start a guest session. Please try again."
+      );
+    } finally {
+      setGuestBusy(false);
+    }
+  }
+
   return (
     <main className="auth-shell">
       <div className="auth-glow auth-glow-one" />
@@ -57,7 +82,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
         <p className="auth-subtitle">
           {isSignup
             ? "Set up your workspace and start building agents with your own knowledge."
-            : "Enter your email and we’ll send you a secure sign-in link."}
+            : "Sign in with email, or explore your workspace as a guest."}
         </p>
         <form onSubmit={sendMagicLink} className="auth-form">
           {isSignup && (
@@ -91,7 +116,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
           </label>
           {error && <div className="auth-alert error" role="alert">{error}</div>}
           {message && <div className="auth-alert success" role="status">{message}</div>}
-          <button className="auth-submit" type="submit" disabled={busy || (sent && !error)}>
+          <button className="auth-submit" type="submit" disabled={busy || guestBusy || (sent && !error)}>
             {busy ? "Sending secure link…" : sent ? "Email link sent" : isSignup ? "Continue with email" : "Send sign-in link"} <ArrowRight size={17} />
           </button>
           {sent && (
@@ -99,18 +124,32 @@ export default function AuthForm({ mode }: AuthFormProps) {
               className="auth-secondary"
               type="button"
               onClick={() => void sendMagicLink()}
-              disabled={busy}
+              disabled={busy || guestBusy}
             >
               {busy ? "Sending…" : "Resend sign-in link"}
             </button>
           )}
         </form>
+
+        <div className="auth-divider"><span>OR</span></div>
+        <button
+          className="auth-secondary"
+          type="button"
+          onClick={() => void continueAsGuest()}
+          disabled={busy || guestBusy}
+        >
+          <UserRound size={17} /> {guestBusy ? "Opening guest workspace…" : "Continue as Guest"}
+        </button>
+        <p className="auth-subtitle" style={{ fontSize: 12, marginTop: 10 }}>
+          Guest workspaces are tied to this browser session. Use email sign-in for a recoverable account.
+        </p>
+
         <div className="auth-switch">
           {isSignup ? "Already have an account?" : "New to CloneAI Studio?"}{" "}
           <Link href={isSignup ? "/login" : "/signup"}>{isSignup ? "Sign in" : "Create account"}</Link>
         </div>
         <div className="auth-security">
-          <ShieldCheck size={13} /> Passwordless sign-in with a secure email link.
+          <ShieldCheck size={13} /> Passwordless sign-in with a secure email link or guest session.
         </div>
       </section>
       <footer className="auth-footer">© 2026 CloneAI Studio · Build responsibly</footer>
