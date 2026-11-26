@@ -3,26 +3,30 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const key =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // Not configured yet: let every request through so the setup screen renders.
   if (!url || !key) return NextResponse.next({ request });
 
   let response = NextResponse.next({ request });
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll(cookiesToSet, headers) {
+      setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-        Object.entries(headers).forEach(([name, value]) => response.headers.set(name, value));
       },
     },
   });
 
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
+  const { data } = await supabase.auth.getUser();
+  const user = data?.user;
   const path = request.nextUrl.pathname;
-  const isAuthRoute = path.startsWith("/login") || path.startsWith("/signup") || path.startsWith("/auth");
+  const isAuthRoute =
+    path.startsWith("/login") || path.startsWith("/signup") || path.startsWith("/auth");
 
   if (!user && !isAuthRoute) {
     const redirectUrl = request.nextUrl.clone();
@@ -42,5 +46,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };
