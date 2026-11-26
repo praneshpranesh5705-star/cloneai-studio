@@ -19,7 +19,7 @@ npm run dev
 
 Open http://localhost:3000.
 
-## Build roadmap
+## Authentication setup\n\n1. Create a Supabase project.\n2. In Supabase Project Settings / Connect, copy the Project URL and Publishable key.\n3. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to Vercel Project Settings → Environment Variables (Production, Preview and Development).\n4. In Supabase Authentication → URL Configuration, set the Site URL to your deployed Vercel URL and add `https://YOUR-VERCEL-DOMAIN/auth/callback` to Redirect URLs.\n5. Run `supabase/profiles.sql` in the Supabase SQL Editor.\n6. Redeploy the Vercel project after adding environment variables.\n\nNever add a service-role or secret key to a `NEXT_PUBLIC_` variable.\n\n## Build roadmap
 
 1. Foundation and dashboard
 2. Supabase authentication and profiles
