@@ -7,7 +7,7 @@ file records exactly what was checked, what was found, and what was changed.
 
 | Check | Method | Result |
 |---|---|---|
-| Installs from a clean clone | `git clone` → `npm install` | ✅ 320 packages, exit 0 |
+| Installs from a clean clone | `git clone` → `npm install` | ✅ exit 0 |
 | Typechecks | `npx tsc --noEmit` | ✅ exit 0, no output |
 | Lints | `npx eslint .` | ✅ exit 0, no output |
 | Unit tests | `npm test` | ✅ 24/24 pass |
@@ -30,6 +30,8 @@ degrades instead of breaking, which is what the README claims.
 307  /studios/voice    -> /setup
 200  /setup            (renders the setup instructions)
 200  /icon.svg
+200  /robots.txt
+200  /sitemap.xml
 404  /nonexistent-page (custom not-found page)
 ```
 
@@ -85,7 +87,10 @@ after `schema.sql` created a **second set of three policies** on `profiles`
 alongside the existing ones, and running it twice failed outright with
 `ERROR: policy "Users can read their own profile" already exists`.
 
-Now idempotent, and the header says plainly that `schema.sql` already covers it.
+Now it drops both naming schemes (`profiles_select_own` from `schema.sql` and
+`"Users can read their own profile"` from this file) before recreating, so the
+policy count stays at 3 no matter how many times it runs. Verified on a fresh
+database: 3 policies after `schema.sql`, still 3 after two runs of this file.
 
 ### 4. Dead footer links — fixed
 
@@ -105,7 +110,13 @@ crawlers are allowed only the public entry points and blocked from `/api/`,
 
 ### 7. No license — added
 
-MIT, matching the README's "add one before distributing".
+MIT, matching the README's "add one before distributing". GitHub now detects it
+and shows "MIT license" in the repository sidebar.
+
+### 8. Empty repository metadata — filled in
+
+The repo had no description, no topics and no homepage. Added a description,
+12 topics, and the live Vercel URL as the homepage.
 
 ## What was verified as already correct
 
@@ -123,6 +134,15 @@ These README claims were checked against the code and hold:
 - **No `service_role` key anywhere** — grep returns nothing.
 - **The three studios are honest placeholders** — `app/studios/[slug]/page.tsx`
   renders "Not built yet" and lists what each would require.
+- **The live Vercel URL works** — returns 200 and serves the setup screen.
+
+## Known gaps (not bugs, but worth knowing)
+
+- **No `package-lock.json`.** The repo installs with `npm install`, which is what
+  the README and SETUP.md say. A lockfile would pin exact versions; it is not
+  committed, so a fresh install resolves ranges from `package.json`.
+- **`next-env.d.ts` is gitignored.** Next.js regenerates it on every install and
+  build, so it does not need to be tracked.
 
 ## What is still not verified
 
