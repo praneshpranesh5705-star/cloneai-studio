@@ -7,8 +7,16 @@ export async function GET(request: Request) {
   const next = searchParams.get("next");
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(new URL(next && next.startsWith("/") ? next : "/", origin));
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      if (data.user) {
+        await supabase.from("profiles").upsert({
+          id: data.user.id,
+          display_name: typeof data.user.user_metadata?.display_name === "string" ? data.user.user_metadata.display_name : null,
+        });
+      }
+      return NextResponse.redirect(new URL(next && next.startsWith("/") ? next : "/", origin));
+    }
   }
   return NextResponse.redirect(new URL("/login?error=confirmation", origin));
 }
