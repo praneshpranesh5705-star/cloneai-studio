@@ -89,7 +89,6 @@ export type DashboardStats = {
   agentCount: number;
   documentCount: number;
   conversationCount: number;
-  messageCount: number;
   usageThisMonth: number;
   recentAgents: Agent[];
 };
@@ -111,7 +110,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     agentCount: agents.count ?? 0,
     documentCount: documents.count ?? 0,
     conversationCount: conversations.count ?? 0,
-    messageCount: 0,
     usageThisMonth: usage.count ?? 0,
     recentAgents: (agents.data ?? []) as Agent[],
   };

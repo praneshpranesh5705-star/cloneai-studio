@@ -106,7 +106,7 @@ export default async function Home() {
       <footer className="footer">
         <span>© 2026 CloneAI Studio</span>
         <span>Made for curious minds <span className="footer-spark">✦</span></span>
-        <span>Privacy · Terms · Status</span>
+        <span>Self-hosted · your data stays in your own Supabase project</span>
       </footer>
     </AppShell>
   );
