@@ -31,13 +31,13 @@ export const PROVIDERS: Record<
   anthropic: {
     label: "Anthropic",
     envKey: "ANTHROPIC_API_KEY",
-    defaultModel: "claude-3-5-haiku-latest",
+    defaultModel: "claude-haiku-5-5",
     docs: "https://console.anthropic.com/settings/keys",
   },
   gemini: {
     label: "Google Gemini",
     envKey: "GEMINI_API_KEY",
-    defaultModel: "gemini-2.0-flash",
+    defaultModel: "gemini-3.8-flash",
     docs: "https://aistudio.google.com/app/apikey",
   },
 };
