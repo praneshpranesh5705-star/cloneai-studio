@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { defaultProvider, hasRealModel, PROVIDERS } from "@/lib/config";
+import { effectiveModel, effectiveProvider } from "@/lib/config";
 import { buildSystemPrompt, trimHistory, type PromptMessage } from "@/lib/prompt";
 import { retrieve, toCitations } from "@/lib/retrieval";
 import { streamCompletion } from "@/lib/providers";
@@ -106,9 +106,12 @@ export async function POST(request: Request) {
     content: message,
   });
 
-  const provider = agent.provider === "demo" && hasRealModel() ? defaultProvider() : agent.provider;
-  const model = provider === agent.provider ? agent.model : PROVIDERS[provider].defaultModel;
+  const provider = effectiveProvider(agent.provider);
+  const model = effectiveModel(agent.provider, agent.model);
   const isDemo = provider === "demo";
+  // True when the agent asked for a real model but this deployment has no key
+  // for it, so we silently fell back. The UI must say so rather than pretend.
+  const fellBack = agent.provider !== "demo" && provider === "demo";
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -121,6 +124,8 @@ export async function POST(request: Request) {
             provider,
             model,
             demo: isDemo,
+            requestedProvider: agent.provider,
+            fellBack,
           }),
         );
         if (citations.length) controller.enqueue(encode({ type: "citations", citations }));

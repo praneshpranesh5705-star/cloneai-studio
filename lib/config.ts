@@ -87,3 +87,30 @@ export function providerKey(id: ProviderId): string | null {
 export function hasRealModel(): boolean {
   return availableProviders().some((p) => p !== "demo");
 }
+
+/**
+ * The provider a chat will actually use, given what the agent recorded.
+ *
+ * This lives here so the agent page and /api/chat resolve it the same way. They
+ * used to compute it separately, which is how the page ended up rendering a
+ * "demo mode" banner for an agent that was really calling OpenAI.
+ *
+ * Two promotions happen:
+ *  - a "demo" agent is upgraded to a real provider when this deployment has a
+ *    key, so saving an agent before adding a key does not lock it into demo;
+ *  - a real provider with no key falls back to demo instead of throwing, so the
+ *    chat degrades to a labelled demo answer rather than an error.
+ */
+export function effectiveProvider(recorded: string): ProviderId {
+  const id = (recorded in PROVIDERS ? recorded : "demo") as ProviderId;
+  if (id !== "demo" && providerKey(id)) return id;
+  if (id === "demo" && hasRealModel()) return defaultProvider();
+  return "demo";
+}
+
+/** The model that pairs with the effective provider. */
+export function effectiveModel(recordedProvider: string, recordedModel: string): string {
+  const provider = effectiveProvider(recordedProvider);
+  if (provider === recordedProvider && recordedModel) return recordedModel;
+  return PROVIDERS[provider].defaultModel;
+}

@@ -51,11 +51,31 @@ export function buildSystemPrompt(agent: Pick<Agent, "name" | "description" | "s
   return parts.join("\n\n");
 }
 
-/** Keep only the most recent turns, and never start with an assistant turn. */
+/**
+ * Keep only the most recent turns, and never start with an assistant turn.
+ *
+ * Also enforces strict user/assistant alternation. This matters more than it
+ * looks: if an assistant reply fails to persist (provider error, dropped
+ * connection), the transcript can contain two user turns in a row. OpenAI
+ * tolerates that; Anthropic and Gemini both reject the request outright, so a
+ * single failed turn would poison the whole conversation on those providers.
+ * Consecutive turns from the same role are merged rather than dropped, so no
+ * user text is lost.
+ */
 export function trimHistory(messages: PromptMessage[], limit = MAX_HISTORY_MESSAGES): PromptMessage[] {
   const recent = messages.slice(-limit);
   while (recent.length && recent[0].role === "assistant") recent.shift();
-  return recent;
+
+  const merged: PromptMessage[] = [];
+  for (const message of recent) {
+    const last = merged[merged.length - 1];
+    if (last && last.role === message.role) {
+      last.content = `${last.content}\n\n${message.content}`.trim();
+    } else {
+      merged.push({ ...message });
+    }
+  }
+  return merged;
 }
 
 /** Rough token estimate: ~4 characters per token for English text. */

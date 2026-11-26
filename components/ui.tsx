@@ -26,13 +26,28 @@ export function EmptyState({
   );
 }
 
-export function DemoBanner({ provider }: { provider: string }) {
+export function DemoBanner({ provider, requested }: { provider: string; requested?: string }) {
   if (provider !== "demo") return null;
+  // Two different situations, and conflating them is what made the old banner
+  // misleading: either this deployment has no key at all, or the agent asked
+  // for a provider whose key is missing and we fell back to demo.
+  const fellBack = Boolean(requested && requested !== "demo");
   return (
     <div className="demo-banner" role="status">
       <Sparkles size={15} />
       <span>
-        <strong>Demo mode.</strong> No model key is configured, so replies are generated locally and are not real AI answers.
+        {fellBack ? (
+          <>
+            <strong>Demo mode.</strong> This agent is set to <code>{requested}</code>, but that
+            provider&apos;s key is not set on this deployment, so replies are generated locally and
+            are not real AI answers.
+          </>
+        ) : (
+          <>
+            <strong>Demo mode.</strong> No model key is configured, so replies are generated locally
+            and are not real AI answers.
+          </>
+        )}
       </span>
       <Link href="/settings">Add a key</Link>
     </div>

@@ -72,7 +72,15 @@ export type UsageEvent = {
 
 /** Shape returned by the chat API as newline-delimited JSON. */
 export type ChatStreamEvent =
-  | { type: "meta"; conversationId: string; provider: ProviderId; model: string; demo: boolean }
+  | {
+      type: "meta";
+      conversationId: string;
+      provider: ProviderId;
+      model: string;
+      demo: boolean;
+      requestedProvider?: ProviderId;
+      fellBack?: boolean;
+    }
   | { type: "citations"; citations: Citation[] }
   | { type: "delta"; text: string }
   | { type: "done"; messageId: string }

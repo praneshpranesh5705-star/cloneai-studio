@@ -5,7 +5,7 @@ import AppShell from "@/components/app-shell";
 import AgentTabs from "@/components/agent-tabs";
 import { DemoBanner } from "@/components/ui";
 import { getAgent, getProfile, listConversations, listDocuments, listMessages } from "@/lib/data";
-import { availableProviders, isSupabaseConfigured, PROVIDERS } from "@/lib/config";
+import { availableProviders, effectiveModel, effectiveProvider, isSupabaseConfigured, PROVIDERS } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,11 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ id
   const messages = latest ? await listMessages(latest.id) : [];
 
   const initial = (profile.display_name ?? "U").trim().charAt(0).toUpperCase() || "U";
-  const demo = agent.provider === "demo";
+  // Resolve the provider the same way /api/chat does, so the banner and the
+  // header describe the model that will actually answer.
+  const provider = effectiveProvider(agent.provider);
+  const model = effectiveModel(agent.provider, agent.model);
+  const demo = provider === "demo";
 
   return (
     <AppShell user={{ name: profile.display_name ?? "Your workspace", email: "Personal workspace", initial }}>
@@ -31,13 +35,13 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ id
 
       <div className="welcome-row agent-head">
         <div>
-          <div className="eyebrow"><span className="live-dot" /> {PROVIDERS[agent.provider]?.label ?? agent.provider} · {agent.model}</div>
+          <div className="eyebrow"><span className="live-dot" /> {PROVIDERS[provider]?.label ?? provider} · {model}</div>
           <h1>{agent.name}</h1>
           <p className="welcome-subtitle">{agent.description || "No description yet."}</p>
         </div>
       </div>
 
-      <DemoBanner provider={agent.provider} />
+      <DemoBanner provider={provider} requested={agent.provider} />
 
       <AgentTabs
         agent={agent}
