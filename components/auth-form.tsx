@@ -173,7 +173,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
           </button>
           {needsConfirmation && (
             <button
-              className="secondary-button"
+              className="auth-secondary"
               type="button"
               onClick={resendConfirmation}
               disabled={resending}
