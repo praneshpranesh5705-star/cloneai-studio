@@ -33,6 +33,45 @@ The three studios are deliberately honest placeholder pages that list what each 
 
 If no model API key is configured, the app runs in **demo mode**: the streaming UI, citations and persistence all work, but replies are generated locally by a deterministic stub. A banner appears on every relevant page and the stub's own text says it is not a real answer. Add a key and the banner disappears.
 
+## Does the AI actually work?
+
+**The code path is real and tested. The live deployment is in demo mode, because no key is set on it.**
+
+What that means precisely:
+
+| Question | Answer |
+|---|---|
+| Is there a real model integration? | Yes — four of them: OpenAI, OpenRouter, Anthropic, Gemini |
+| Do the adapters build correct requests? | Yes — verified against mock SSE servers speaking each vendor's exact wire format |
+| Does streaming parse correctly? | Yes — all four shapes tested, including Anthropic `ping` frames and OpenAI `[DONE]` |
+| Do vendor errors surface readably? | Yes — a 401 body becomes "Invalid API key provided." |
+| Has a live vendor ever answered? | **No.** No key was available in the build environment |
+| Is the public deployment answering with AI? | **No.** It has no key, so it serves demo replies and says so |
+
+The distinction matters: the integration is not a stub pretending to be an API client. It is a working client that has never been pointed at a live endpoint. The first real call happens when you add a key.
+
+### How to leave demo mode
+
+1. Get a key from any one of: [OpenAI](https://platform.openai.com/api-keys), [OpenRouter](https://openrouter.ai/keys), [Anthropic](https://console.anthropic.com/settings/keys), [Google AI Studio](https://aistudio.google.com/app/apikey).
+2. Add it to `.env.local` (local) or Vercel → Settings → Environment Variables (deployed), using the exact name from the table below.
+3. Redeploy. `/settings` shows a green dot next to the provider once it is detected.
+
+| Provider | Variable | Default model |
+|---|---|---|
+| OpenAI | `OPENAI_API_KEY` | `gpt-4o-mini` |
+| OpenRouter | `OPENROUTER_API_KEY` | `openai/gpt-4o-mini` |
+| Anthropic | `ANTHROPIC_API_KEY` | `claude-haiku-4-5-20251001` |
+| Google Gemini | `GEMINI_API_KEY` | `gemini-3.8-flash` |
+
+Set `AI_PROVIDER` to force one when several keys are present.
+
+### Provider resolution
+
+An agent stores the provider it was created with, but that is not always what runs. `effectiveProvider()` in `lib/config.ts` decides, and both the agent page and `/api/chat` call it, so the banner and the actual call can never disagree:
+
+- A **demo** agent is promoted to a real provider when this deployment has a key — so an agent saved before you added a key starts working immediately.
+- A **real** provider with **no key** falls back to demo rather than throwing, and the banner says which provider is missing.
+
 ## Stack
 
 - **Next.js 15** App Router, server components for data, route handlers for the API
@@ -101,7 +140,9 @@ lib/
   types.ts                      Shared types
 supabase/schema.sql             The whole database, idempotent
 supabase/profiles.sql           Legacy, optional — schema.sql already covers it
-tests/logic.test.ts             24 unit tests
+tests/logic.test.ts             24 unit tests (retrieval, prompt, validation)
+tests/providers.test.ts          7 tests — all four provider adapters vs mock SSE
+tests/ai-path.test.ts            8 tests — turn alternation + provider resolution
 middleware.ts                   Session refresh + route protection
 AUDIT.md                        What was verified, and what was fixed
 ```
@@ -132,6 +173,7 @@ Verified by running the schema against Postgres 15 and attacking it: an authenti
 - **No file uploads yet.** Knowledge is pasted text. PDF/DOCX ingestion would need a parser and a storage bucket.
 - **No streaming cancellation on the server.** The client can stop reading; the provider request is not aborted, so the tokens are still billed.
 - **Usage is a log, not a meter.** Nothing enforces quotas.
+- **No live model call has been made.** The adapters are tested against mock SSE servers, not against the vendors. See [AUDIT-AI.md](./AUDIT-AI.md).
 
 ## License
 
@@ -141,3 +183,6 @@ MIT — see [LICENSE](./LICENSE).
 
 This repository was re-verified end to end on 2026-11-26. What was checked and
 what was found is recorded in [AUDIT.md](./AUDIT.md).
+
+The AI path specifically — whether the chat answers with a real model or only
+demo — was audited separately in [AUDIT-AI.md](./AUDIT-AI.md).
