@@ -1,12 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Code2, Download, Eye, LoaderCircle, Monitor, RefreshCw, Smartphone, Sparkles } from "lucide-react";
+import { Code2, Download, LoaderCircle, Monitor, RefreshCw, Smartphone, Sparkles } from "lucide-react";
 
 const PREVIEW_CSP = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src data: blob: https:; style-src 'unsafe-inline' https:; font-src data: https:; script-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; base-uri 'none'\">";
 
 function makePreviewDocument(html: string) {
-  return html.replace(/<head([^>]*)>/i, (match) => match + PREVIEW_CSP);
+  if (/<head[\\s>]/i.test(html)) return html.replace(/<head([^>]*)>/i, (match) => match + PREVIEW_CSP);\n  return html.replace(/<html([^>]*)>/i, (match) => match + "<head>" + PREVIEW_CSP + "</head>");
 }
 
 export default function WebsiteBuilder() {
