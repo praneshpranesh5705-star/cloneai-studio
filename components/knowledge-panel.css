@@ -1,0 +1,19 @@
+/* Knowledge base: paste / upload switch, drop zone, success note.
+   Imported by components/knowledge-panel.tsx so the component carries its
+   own styles and globals.css stays untouched. */
+
+.kb-mode-switch{display:flex;gap:6px;padding:4px;border:1px solid var(--line);border-radius:10px;background:#090c16;margin:0 0 16px}
+.kb-mode-switch button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:0;border-radius:7px;background:none;color:#8b93aa;font:600 10px var(--font);padding:9px 10px;cursor:pointer;transition:.15s}
+.kb-mode-switch button:hover{color:#c5cbe0}
+.kb-mode-switch button.active{background:#1b2033;color:#e6e9f5;box-shadow:0 1px 0 #ffffff0f inset}
+.kb-mode-switch button:focus-visible{outline:2px solid #987aff99;outline-offset:1px}
+
+.kb-drop{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;text-align:center;border:1.5px dashed #ffffff26;border-radius:11px;background:#090c16;padding:26px 18px;cursor:pointer;transition:.18s;color:#7f879f}
+.kb-drop:hover,.kb-drop:focus-visible{border-color:#987aff80;background:#0d1120;color:#b9c0d6;outline:0}
+.kb-drop.dragging{border-color:#a98bff;background:#151326;color:#d8ceff;box-shadow:0 0 0 3px #8c6bff1f}
+.kb-drop.has-file{border-style:solid;border-color:#7b68c94a;background:#151326;color:#d8ceff}
+.kb-drop strong{font-size:11px;font-weight:600;color:#e6e9f5;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kb-drop small{font-size:9px;color:#7f879f}
+.kb-file-input{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+.success-note{border:1px solid #4fd18b30;background:#4fd18b14;border-radius:9px;padding:10px 12px;color:#8fe3b4;font-size:10px;margin:0 0 14px;line-height:1.6}
