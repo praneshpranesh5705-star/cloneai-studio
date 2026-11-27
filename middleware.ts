@@ -28,6 +28,13 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute =
     path.startsWith("/login") || path.startsWith("/signup") || path.startsWith("/auth");
 
+  // Published pages are public by design: /p/<slug> is served to anyone, and
+  // the database policy decides whether the slug resolves. Without this, a
+  // visitor who is not signed in would be bounced to the login screen.
+  if (path === "/p" || path.startsWith("/p/")) {
+    return response;
+  }
+
   if (!user && !isAuthRoute) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
