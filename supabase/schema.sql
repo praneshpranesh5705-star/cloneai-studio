@@ -228,9 +228,57 @@ create policy "usage_insert_own" on public.usage_events
   for insert to authenticated with check ((select auth.uid()) = owner_id);
 
 -- ---------------------------------------------------------------------------
+-- 8b. Generated websites (Website Builder)
+-- ---------------------------------------------------------------------------
+create table if not exists public.websites (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users (id) on delete cascade,
+  slug text not null unique check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and char_length(slug) <= 64),
+  title text not null check (char_length(title) between 1 and 120),
+  prompt text not null default '',
+  html text not null check (char_length(html) between 1 and 200000),
+  published boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists websites_owner_idx on public.websites (owner_id, created_at desc);
+create index if not exists websites_published_idx on public.websites (slug) where published = true;
+
+alter table public.websites enable row level security;
+
+-- The owner can do anything with their own pages.
+drop policy if exists "websites_select_own" on public.websites;
+create policy "websites_select_own" on public.websites
+  for select to authenticated using ((select auth.uid()) = owner_id);
+
+drop policy if exists "websites_insert_own" on public.websites;
+create policy "websites_insert_own" on public.websites
+  for insert to authenticated with check ((select auth.uid()) = owner_id);
+
+drop policy if exists "websites_update_own" on public.websites;
+create policy "websites_update_own" on public.websites
+  for update to authenticated using ((select auth.uid()) = owner_id)
+  with check ((select auth.uid()) = owner_id);
+
+drop policy if exists "websites_delete_own" on public.websites;
+create policy "websites_delete_own" on public.websites
+  for delete to authenticated using ((select auth.uid()) = owner_id);
+
+-- Anyone, signed in or not, may read a page that has been published. This is
+-- the only table in the schema with an anonymous read policy, and it is
+-- deliberately narrow: unpublished drafts stay invisible to everyone but the
+-- owner, and no other column of another user's data is reachable this way.
+drop policy if exists "websites_select_published" on public.websites;
+create policy "websites_select_published" on public.websites
+  for select to anon, authenticated using (published = true);
+
+-- ---------------------------------------------------------------------------
 -- 9. Grants
 -- ---------------------------------------------------------------------------
 grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.websites to authenticated;
+grant select on public.websites to anon;
 grant select, insert, update on public.profiles      to authenticated;
 grant select, insert, update, delete on public.agents        to authenticated;
 grant select, insert, delete on public.documents     to authenticated;
