@@ -22,7 +22,7 @@ This repository used to be a UI mockup: every nav button showed a "coming soon" 
 | Usage log (one row per model call) | ✅ Working |
 | Dashboard with live counts | ✅ Working |
 | Demo mode when no API key is set | ✅ Working |
-| Voice Studio | ⛔ Not built — the page says so |
+| Voice Studio text-to-speech | 🟡 Implemented — requires a funded OpenAI API account and `OPENAI_API_KEY` |
 | Avatar Studio | ⛔ Not built — the page says so |
 | Website Builder | ⛔ Not built — the page says so |
 | Billing / subscriptions | ⛔ Not built — usage is logged, not charged |
@@ -117,19 +117,19 @@ app/
   settings/                     Account + which providers are configured
   usage/                        Model call log
   help/                          FAQ
-  studios/[slug]/               Honest "not built yet" pages
+  studios/[slug]/               Voice Studio + honest Avatar / Website placeholders
   setup/                        Shown when Supabase env vars are missing
   login/ signup/                Auth screens
   robots.ts sitemap.ts          Crawler rules — public pages only
   api/
-    chat/route.ts               Streaming NDJSON chat endpoint
+    chat/route.ts               Streaming NDJSON chat endpoint\n    voice/route.ts              Authenticated OpenAI text-to-speech endpoint
     agents/route.ts             List + create
     agents/[id]/route.ts        Get + update + delete
     agents/[id]/documents/      List + create documents
     documents/[id]/route.ts     Delete a document
   auth/callback/route.ts        Email confirmation exchange
   auth/signout/route.ts         Sign out
-components/                     App shell, chat, forms, panels
+components/                     App shell, chat, forms, panels, Voice Studio
 lib/
   config.ts                     Env reading + provider registry (never throws)
   providers.ts                  OpenAI / OpenRouter / Anthropic / Gemini / demo, all streaming
@@ -186,3 +186,12 @@ what was found is recorded in [AUDIT.md](./AUDIT.md).
 
 The AI path specifically — whether the chat answers with a real model or only
 demo — was audited separately in [AUDIT-AI.md](./AUDIT-AI.md).
+
+
+## Voice Studio
+
+Voice Studio currently supports text-to-speech with nine preset voices, a speaking-style instruction, in-browser playback and MP3 download. It uses the authenticated server route `POST /api/voice`; the OpenAI API key stays on the server and is never exposed to the browser.
+
+To enable it, add `OPENAI_API_KEY` to Vercel → Project Settings → Environment Variables for Production (and Preview/Development if desired), then redeploy. The OpenAI API account must have billing/payment details and available API credit. ChatGPT Plus/Free subscriptions and ChatGPT message limits are separate from API billing. Voice cloning of a real person is not part of this text-to-speech feature; obtain explicit permission before using someone's voice or likeness.
+
+The initial integration uses OpenAI's `gpt-4o-mini-tts` model. Check the current OpenAI audio documentation before extending this integration or selecting a replacement model.
