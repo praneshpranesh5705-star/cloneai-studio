@@ -32,11 +32,10 @@ const STUDIOS: Record<string, { title: string; blurb: string; needs: string[] }>
   website: {
     title: "Website Builder",
     blurb: "Generate a landing page from a prompt and publish it.",
-    needs: [
-      "A code-generation model",
-      "A hosting target and a build pipeline",
-      "A preview sandbox so generated code cannot run unsafely",
-    ],
+    // Implemented — rendered by <WebsiteBuilder /> below. `needs` is unused for
+    // this studio and kept only so the shape stays uniform; it never reaches
+    // the placeholder branch.
+    needs: [],
   },
 };
 

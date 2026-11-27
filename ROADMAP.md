@@ -34,7 +34,7 @@ This roadmap extends the existing Next.js, Supabase and multi-provider foundatio
 - Voice Studio: speech input and text-to-speech with clear consent and provider configuration.
 - Avatar Studio: generated avatars and video only through an explicitly selected provider; require consent for real-person likenesses.
 - Image Studio: prompt-to-image generation with provider/model selection and saved outputs.
-- Website Builder: prompt-to-code, isolated preview/build process, editable output and export. Never execute generated code inside the main application server.
+- ~~Website Builder: prompt-to-code, isolated preview/build process, editable output and export. Never execute generated code inside the main application server.~~ **Done.** Generation runs through whichever provider is configured; output is sanitised and previewed in a sandboxed iframe; pages can be saved as drafts or published at `/p/<slug>` with a strict CSP; HTML export is supported. Remaining gap: publishing is to a `/p/<slug>` path on this app, not to a custom domain or external host.
 
 ## Phase 4 — Product and operations
 
