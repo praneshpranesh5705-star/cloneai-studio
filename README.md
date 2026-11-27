@@ -15,7 +15,7 @@ This repository used to be a UI mockup: every nav button showed a "coming soon" 
 | Email/password auth (Supabase) | ✅ Working |
 | Create, edit, delete agents | ✅ Working |
 | Per-agent instructions, model, temperature | ✅ Working |
-| Knowledge base — add & delete documents | ✅ Working |
+| Knowledge base — paste text, or upload PDF / DOCX | ✅ Working |
 | Retrieval — TF-IDF chunk scoring, top 4 passages | ✅ Working |
 | Streaming chat with citations | ✅ Working |
 | Conversation history persisted | ✅ Working |
@@ -122,10 +122,12 @@ app/
   login/ signup/                Auth screens
   robots.ts sitemap.ts          Crawler rules — public pages only
   api/
-    chat/route.ts               Streaming NDJSON chat endpoint\n    voice/route.ts              Authenticated OpenAI text-to-speech endpoint
+    chat/route.ts               Streaming NDJSON chat endpoint
+    voice/route.ts              Authenticated OpenAI text-to-speech endpoint
     agents/route.ts             List + create
     agents/[id]/route.ts        Get + update + delete
     agents/[id]/documents/      List + create documents
+    agents/[id]/documents/upload/  Extract text from a PDF or DOCX and save it
     documents/[id]/route.ts     Delete a document
   auth/callback/route.ts        Email confirmation exchange
   auth/signout/route.ts         Sign out
@@ -137,10 +139,12 @@ lib/
   prompt.ts                     System prompt assembly + history trimming
   validation.ts                 Input validation shared by API and forms
   data.ts                       Server-side queries
+  extract.ts                    PDF/DOCX text extraction + error codes
   types.ts                      Shared types
 supabase/schema.sql             The whole database, idempotent
 supabase/profiles.sql           Legacy, optional — schema.sql already covers it
 tests/logic.test.ts             24 unit tests (retrieval, prompt, validation)
+tests/extract.test.ts           14 tests — PDF/DOCX extraction vs real files
 tests/providers.test.ts          7 tests — all four provider adapters vs mock SSE
 tests/ai-path.test.ts            8 tests — turn alternation + provider resolution
 middleware.ts                   Session refresh + route protection
@@ -158,19 +162,33 @@ AUDIT.md                        What was verified, and what was fixed
 
 The user turn is persisted **before** streaming starts, so a dropped connection still leaves an accurate transcript.
 
+## Adding knowledge from a file
+
+On an agent's **Knowledge** tab, switch to **Upload file** and drop in a PDF or DOCX
+(up to 4 MB) — or click the box to browse. The text is extracted server-side and
+saved as a normal document, so retrieval and citations work exactly as they do
+for pasted text. The title is taken from the filename and can be edited before
+saving.
+
+Failures are reported in the panel, never as a crash: a wrong file type, a file
+over 4 MB, a password-protected or corrupt PDF, and a scanned PDF with no
+selectable text each get their own message. The last one tells you the file
+looks like a scan and needs OCR first.
+
 ## Security model
 
 - **Row Level Security on every table.** A signed-in user can only read their own agents, documents, conversations and messages. Public agents are readable but not writable by others.
 - **Anon key in the browser is safe** — that is what RLS is for. The service-role key is never referenced anywhere in this codebase.
 - **API keys for model providers are server-only** and read from the environment at request time. No `NEXT_PUBLIC_` prefix on any secret.
 - **All writes go through route handlers** that re-check `auth.getUser()` and re-validate input server-side; client-side validation is a convenience, not a control.
+- **Uploads are verified before parsing.** The format is read from the file's leading bytes, not its extension, so a renamed file is rejected rather than fed to the parser.
 
 Verified by running the schema against Postgres 15 and attacking it: an authenticated user attempting to insert an agent owned by someone else gets `new row violates row-level security policy`, and reads of another user's documents, messages and usage rows return zero.
 
 ## Limits you should know
 
 - **Retrieval is lexical, not semantic.** No embeddings. It works well for keyword-ish questions and document sets of tens of documents. A question phrased with entirely different vocabulary from the source will miss.
-- **No file uploads yet.** Knowledge is pasted text. PDF/DOCX ingestion would need a parser and a storage bucket.
+- **Uploads are extracted, not stored.** A PDF or DOCX is parsed in the request and its plain text is saved as a document. The original file is not kept, so there is no re-download and no OCR — a scanned, image-only PDF has no selectable text and is rejected with a message saying so.
 - **No streaming cancellation on the server.** The client can stop reading; the provider request is not aborted, so the tokens are still billed.
 - **Usage is a log, not a meter.** Nothing enforces quotas.
 - **No live model call has been made.** The adapters are tested against mock SSE servers, not against the vendors. See [AUDIT-AI.md](./AUDIT-AI.md).
