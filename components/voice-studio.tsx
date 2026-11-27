@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AudioLines, Download, LoaderCircle, Play, RotateCcw, Sparkles, Volume2 } from "lucide-react";
+import { AudioLines, Download, LoaderCircle, Sparkles, Volume2 } from "lucide-react";
 
 const VOICES = [
   { id: "alloy", label: "Alloy · Balanced" },
@@ -22,7 +22,6 @@ export default function VoiceStudio() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
-  const [fileName, setFileName] = useState("cloneai-voice.mp3");
 
   useEffect(() => () => { if (audioUrl) URL.revokeObjectURL(audioUrl); }, [audioUrl]);
 
@@ -45,7 +44,6 @@ export default function VoiceStudio() {
       const blob = await response.blob();
       if (!blob.size) throw new Error("The provider returned an empty audio file.");
       setAudioUrl(URL.createObjectURL(blob));
-      setFileName("cloneai-studio-voice.mp3");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Voice generation failed.");
     } finally { setBusy(false); }
@@ -80,7 +78,7 @@ export default function VoiceStudio() {
         </button>
         {audioUrl && (
           <div className="voice-result">
-            <div className="voice-result-title"><span><Volume2 size={17} /> Generated audio</span><a href={audioUrl} download={fileName}><Download size={15} /> Download MP3</a></div>
+            <div className="voice-result-title"><span><Volume2 size={17} /> Generated audio</span><a href={audioUrl} download="cloneai-studio-voice.mp3"><Download size={15} /> Download MP3</a></div>
             <audio controls autoPlay src={audioUrl} className="voice-audio">Your browser does not support audio playback.</audio>
           </div>
         )}
