@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AudioLines, Download, LoaderCircle, Play, Sparkles } from "lucide-react";
+import { AudioLines, Download, LoaderCircle, Play, Sparkles, Square } from "lucide-react";
 
 const VOICES = [
   { id: "alloy", label: "Alloy · Balanced" },
@@ -22,8 +22,52 @@ export default function VoiceStudio() {
   const [audioUrl, setAudioUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [browserVoices, setBrowserVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [browserVoiceURI, setBrowserVoiceURI] = useState("");
+  const [speaking, setSpeaking] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    const synth = window.speechSynthesis;
+    const refreshVoices = () => {
+      const available = synth.getVoices();
+      setBrowserVoices(available);
+      setBrowserVoiceURI((current) => current || available.find((item) => item.default)?.voiceURI || available[0]?.voiceURI || "");
+    };
+    refreshVoices();
+    synth.addEventListener("voiceschanged", refreshVoices);
+    return () => {
+      synth.removeEventListener("voiceschanged", refreshVoices);
+      synth.cancel();
+    };
+  }, []);
 
   useEffect(() => () => { if (audioUrl) URL.revokeObjectURL(audioUrl); }, [audioUrl]);
+
+  function speakForFree() {
+    if (!text.trim()) { setError("Enter some text before speaking."); return; }
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      setError("Your browser does not support device text-to-speech. Try the latest Chrome browser.");
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text.trim());
+    const selected = browserVoices.find((item) => item.voiceURI === browserVoiceURI);
+    if (selected) {
+      utterance.voice = selected;
+      utterance.lang = selected.lang;
+    }
+    utterance.onstart = () => setSpeaking(true);
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    setError("");
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function stopSpeaking() {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+    setSpeaking(false);
+  }
 
   async function generate() {
     if (!text.trim()) { setError("Enter some text before generating audio."); return; }
@@ -78,6 +122,34 @@ export default function VoiceStudio() {
         </div>
       </div>
 
+      <div className="activity-card" style={{ display: "grid", gap: 12 }}>
+        <div>
+          <strong>Free device voice</strong>
+          <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>Uses a voice already available on your phone or browser. No API key, credits, or payment needed.</p>
+        </div>
+        {browserVoices.length > 0 && (
+          <div>
+            <label htmlFor="device-voice-choice" className="field-label">Device voice</label>
+            <select id="device-voice-choice" value={browserVoiceURI} onChange={(event) => setBrowserVoiceURI(event.target.value)} className="form-input" style={{ width: "100%", marginTop: 8 }}>
+              {browserVoices.map((item) => <option key={item.voiceURI} value={item.voiceURI}>{item.name} ({item.lang}){item.default ? " · Default" : ""}</option>)}
+            </select>
+          </div>
+        )}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+          <button className="primary-button" type="button" onClick={speakForFree} disabled={!text.trim() || speaking} style={{ justifyContent: "center" }}>
+            <Play size={16} /> Speak for free
+          </button>
+          <button className="subtle-button" type="button" onClick={stopSpeaking} disabled={!speaking}>
+            <Square size={14} /> Stop
+          </button>
+        </div>
+        {browserVoices.length === 0 && <p className="muted" style={{ fontSize: 11 }}>Loading device voices. If none appear, check that text-to-speech voices are installed on your phone.</p>}
+      </div>
+
+      <div>
+        <strong>AI voice generation (OpenAI)</strong>
+        <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>Optional cloud generation. This requires an OpenAI API key with available API credits.</p>
+      </div>
       <button className="primary-button" type="button" onClick={generate} disabled={loading || !text.trim()} style={{ justifyContent: "center" }}>
         {loading ? <LoaderCircle size={17} className="spin" /> : <Sparkles size={17} />}
         {loading ? "Generating voice..." : "Generate voice"}
@@ -98,7 +170,7 @@ export default function VoiceStudio() {
         </div>
       )}
       <p className="muted" style={{ fontSize: 11 }}>
-        Audio is generated with OpenAI text-to-speech. The voice is synthetic and is not a clone of a real person.
+        Free device speech plays through your phone or browser and does not create a downloadable MP3. OpenAI-generated audio is synthetic and is not a clone of a real person.
       </p>
     </section>
   );
