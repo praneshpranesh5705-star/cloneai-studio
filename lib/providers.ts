@@ -8,6 +8,12 @@ export type StreamRequest = {
   messages: PromptMessage[];
   temperature: number;
   maxTokens: number;
+  /**
+   * Lets a caller abandon the request. Without this, a provider that stalls
+   * mid-stream leaves the reader blocked forever: closing the generator does
+   * not interrupt a pending `reader.read()`, it only waits for it.
+   */
+  signal?: AbortSignal;
 };
 
 export type StreamChunk = { type: "text"; text: string };
@@ -72,6 +78,7 @@ async function* streamOpenAICompatible(req: StreamRequest, baseUrl: string, key:
       max_tokens: req.maxTokens,
       messages: [{ role: "system", content: req.system }, ...req.messages],
     }),
+    signal: req.signal,
   });
 
   await assertOk(response, label);
@@ -105,6 +112,7 @@ async function* streamAnthropic(req: StreamRequest, key: string): AsyncGenerator
       stream: true,
       messages: req.messages,
     }),
+    signal: req.signal,
   });
 
   await assertOk(response, "Anthropic");
@@ -144,6 +152,7 @@ async function* streamGemini(req: StreamRequest, key: string): AsyncGenerator<St
           maxOutputTokens: req.maxTokens,
         },
       }),
+      signal: req.signal,
     },
   );
 
