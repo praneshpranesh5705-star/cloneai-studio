@@ -4,15 +4,15 @@ import { useEffect, useState } from "react";
 import { AudioLines, Download, LoaderCircle, Sparkles, Volume2 } from "lucide-react";
 
 const VOICES = [
-  { id: "alloy", label: "Alloy · Balanced" },
-  { id: "ash", label: "Ash · Clear" },
-  { id: "coral", label: "Coral · Warm" },
-  { id: "echo", label: "Echo · Smooth" },
-  { id: "fable", label: "Fable · Expressive" },
-  { id: "nova", label: "Nova · Friendly" },
-  { id: "onyx", label: "Onyx · Deep" },
-  { id: "sage", label: "Sage · Calm" },
-  { id: "shimmer", label: "Shimmer · Bright" },
+  { id: "alloy", label: "Puck · Balanced" },
+  { id: "ash", label: "Charon · Deep" },
+  { id: "coral", label: "Kore · Warm" },
+  { id: "echo", label: "Orus · Smooth" },
+  { id: "fable", label: "Leda · Expressive" },
+  { id: "nova", label: "Aoede · Friendly" },
+  { id: "onyx", label: "Fenrir · Bold" },
+  { id: "sage", label: "Schedar · Calm" },
+  { id: "shimmer", label: "Zephyr · Bright" },
 ];
 
 export default function VoiceStudio() {
@@ -42,7 +42,7 @@ export default function VoiceStudio() {
         throw new Error(data.error || "Voice generation failed. Please try again.");
       }
       const blob = await response.blob();
-      if (!blob.size) throw new Error("The provider returned an empty audio file.");
+      if (!blob.size) throw new Error("Gemini returned an empty audio file.");
       setAudioUrl(URL.createObjectURL(blob));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Voice generation failed.");
@@ -54,7 +54,7 @@ export default function VoiceStudio() {
       <section className="form-card voice-studio-card">
         <div className="voice-studio-heading">
           <span className="voice-studio-icon"><AudioLines size={20} /></span>
-          <div><h2>Text to speech</h2><p className="form-lead">Turn your script into natural-sounding speech. Choose a voice and speaking direction.</p></div>
+          <div><h2>Text to speech</h2><p className="form-lead">Turn your script into natural-sounding speech with Gemini. Choose a voice and speaking direction.</p></div>
         </div>
         <label className="field">
           <span>Your script <small>{script.length}/5000 characters</small></span>
@@ -78,15 +78,15 @@ export default function VoiceStudio() {
         </button>
         {audioUrl && (
           <div className="voice-result">
-            <div className="voice-result-title"><span><Volume2 size={17} /> Generated audio</span><a href={audioUrl} download="cloneai-studio-voice.mp3"><Download size={15} /> Download MP3</a></div>
+            <div className="voice-result-title"><span><Volume2 size={17} /> Generated audio</span><a href={audioUrl} download="cloneai-studio-voice.wav"><Download size={15} /> Download WAV</a></div>
             <audio controls autoPlay src={audioUrl} className="voice-audio">Your browser does not support audio playback.</audio>
           </div>
         )}
-        <p className="voice-disclaimer">Generated speech uses an AI voice preset. It does not clone a real person. Only upload or use voices and likenesses with the person’s permission.</p>
+        <p className="voice-disclaimer">Generated speech uses a Gemini AI voice preset. It does not clone a real person. Only use voices and likenesses with the person’s permission.</p>
       </section>
       <section className="setup-note voice-setup-note">
-        <strong>Provider requirement</strong><br />
-        Voice generation uses your server-side <code>OPENAI_API_KEY</code>. Your API account needs an active payment method and available API credit. A ChatGPT subscription does not include API credits.
+        <strong>Provider</strong><br />
+        Voice generation uses your server-side <code>GEMINI_API_KEY</code>. Gemini API usage is subject to model availability, free-tier eligibility, rate limits, and current Google pricing. Your key is never sent to the browser.
       </section>
     </>
   );
