@@ -23,11 +23,11 @@ This repository used to be a UI mockup: every nav button showed a "coming soon" 
 | Dashboard with live counts | ✅ Working |
 | Demo mode when no API key is set | ✅ Working |
 | Voice Studio text-to-speech | 🟡 Implemented — requires a funded OpenAI API account and `OPENAI_API_KEY` |
+| Website Builder — generate, preview, revise, save, publish | ✅ Working — needs any one model key |
 | Avatar Studio | ⛔ Not built — the page says so |
-| Website Builder | ⛔ Not built — the page says so |
 | Billing / subscriptions | ⛔ Not built — usage is logged, not charged |
 
-The three studios are deliberately honest placeholder pages that list what each would require. They do not pretend to work.
+Avatar Studio remains a deliberate placeholder that lists what it would require. It does not pretend to work. Website Builder is implemented; see [Website Builder](#website-builder) below.
 
 ## Demo mode
 
@@ -117,13 +117,16 @@ app/
   settings/                     Account + which providers are configured
   usage/                        Model call log
   help/                          FAQ
-  studios/[slug]/               Voice Studio + honest Avatar / Website placeholders
+  studios/[slug]/               Voice Studio, Website Builder, and the Avatar placeholder
+  p/[slug]/route.ts             Serves a published generated page, publicly
   setup/                        Shown when Supabase env vars are missing
   login/ signup/                Auth screens
   robots.ts sitemap.ts          Crawler rules — public pages only
   api/
     chat/route.ts               Streaming NDJSON chat endpoint
-    voice/route.ts              Authenticated OpenAI text-to-speech endpoint
+    voice/route.ts              Authenticated text-to-speech endpoint
+    website-builder/route.ts    Generate a page from a brief (any provider)
+    website-builder/save/       Save a draft, or publish it for public reading
     agents/route.ts             List + create
     agents/[id]/route.ts        Get + update + delete
     agents/[id]/documents/      List + create documents
@@ -135,6 +138,8 @@ components/                     App shell, chat, forms, panels, Voice Studio
 lib/
   config.ts                     Env reading + provider registry (never throws)
   providers.ts                  OpenAI / OpenRouter / Anthropic / Gemini / demo, all streaming
+  complete.ts                   Non-streaming completion for the studios, with budget + timeout
+  website.ts                    Page validation, sanitising, titles and slugs
   retrieval.ts                  Chunking + TF-IDF scoring
   prompt.ts                     System prompt assembly + history trimming
   validation.ts                 Input validation shared by API and forms
@@ -147,6 +152,9 @@ tests/logic.test.ts             24 unit tests (retrieval, prompt, validation)
 tests/extract.test.ts           14 tests — PDF/DOCX extraction vs real files
 tests/providers.test.ts          7 tests — all four provider adapters vs mock SSE
 tests/ai-path.test.ts            8 tests — turn alternation + provider resolution
+tests/website.test.ts           26 tests — page validation, sanitising, slugs
+tests/complete.test.ts           5 tests — completion wrapper vs a mock provider
+tests/e2e-website.mjs           16 checks against a built server
 middleware.ts                   Session refresh + route protection
 AUDIT.md                        What was verified, and what was fixed
 ```
@@ -213,3 +221,22 @@ Voice Studio currently supports text-to-speech with nine preset voices, a speaki
 To enable it, add `OPENAI_API_KEY` to Vercel → Project Settings → Environment Variables for Production (and Preview/Development if desired), then redeploy. The OpenAI API account must have billing/payment details and available API credit. ChatGPT Plus/Free subscriptions and ChatGPT message limits are separate from API billing. Voice cloning of a real person is not part of this text-to-speech feature; obtain explicit permission before using someone's voice or likeness.
 
 The initial integration uses OpenAI's `gpt-4o-mini-tts` model. Check the current OpenAI audio documentation before extending this integration or selecting a replacement model.
+
+
+## Website Builder
+
+Open **Studios → Website Builder** (`/studios/website`).
+
+1. Describe the site you want and press **Generate website**. The model returns one complete HTML document.
+2. Preview it at desktop or mobile width, or inspect the generated source.
+3. Ask for a change in plain language and press **Apply changes** — the model revises the page it just produced.
+4. **Save draft** stores it privately. **Publish** makes it readable at `/p/<slug>` by anyone with the link, no sign-in required.
+5. **Download** gets you a standalone `.html` file you can host anywhere.
+
+It works with whichever of `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY` or `GEMINI_API_KEY` is set — the first one found is used, or name one explicitly with `AI_PROVIDER`. Unlike chat, there is no demo fallback: without a key the page says which variable to add rather than pretending to build something.
+
+**What the generated page cannot do.** Output is sanitised before it is stored or previewed: `<script>` blocks, inline `on*` handlers, `javascript:` URLs, iframes and meta-refresh are removed. A published page is served from `/p/<slug>` with a strict Content-Security-Policy (`script-src 'none'`), `X-Frame-Options: DENY` and `nosniff`, so it cannot run script, read your cookies, or frame the app. Generated code never executes on the application server.
+
+**Security model.** `websites` is the only table with an anonymous read policy, and it is narrow: `published = true` rows are world-readable, drafts are owner-only. Owners alone can insert, update or delete, enforced by four RLS policies verified against real users (see `tests/sql/websites-rls.sql`).
+
+**Requires the `websites` table.** If you created your database before this feature existed, run `supabase/schema.sql` again — it is idempotent and adds the table without touching existing rows.
