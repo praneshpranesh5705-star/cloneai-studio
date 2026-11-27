@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui";
 import { getProfile } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/config";
 import VoiceStudio from "@/components/voice-studio";
+import WebsiteBuilder from "@/components/website-builder";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,7 @@ export default async function StudioPage({ params }: { params: Promise<{ slug: s
     <AppShell user={{ name: profile.display_name ?? "Your workspace", email: "Personal workspace", initial }}>
       <PageHeader eyebrow="STUDIO" title={studio.title} subtitle={studio.blurb} />
 
-      {slug === "voice" ? <VoiceStudio /> : <section className="form-card">
+      {slug === "voice" ? <VoiceStudio /> : slug === "website" ? <WebsiteBuilder /> : <section className="form-card">
         <div className="roadmap-head">
           <span className="roadmap-icon"><Construction size={18} /></span>
           <div>
