@@ -14,6 +14,7 @@ import {
   Smartphone,
   Sparkles,
 } from "lucide-react";
+import "./website-builder.css";
 
 const PREVIEW_CSP =
   "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src data: blob: https:; style-src 'unsafe-inline' https:; font-src data: https:; script-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; base-uri 'none'\">";
