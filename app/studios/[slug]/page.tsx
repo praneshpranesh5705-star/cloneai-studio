@@ -5,6 +5,7 @@ import AppShell from "@/components/app-shell";
 import { PageHeader } from "@/components/ui";
 import { getProfile } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/config";
+import VoiceStudio from "@/components/voice-studio";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +61,7 @@ export default async function StudioPage({ params }: { params: Promise<{ slug: s
     <AppShell user={{ name: profile.display_name ?? "Your workspace", email: "Personal workspace", initial }}>
       <PageHeader eyebrow="STUDIO" title={studio.title} subtitle={studio.blurb} />
 
-      <section className="form-card">
+      {slug === "voice" ? <VoiceStudio /> : <section className="form-card">
         <div className="roadmap-head">
           <span className="roadmap-icon"><Construction size={18} /></span>
           <div>
@@ -83,7 +84,7 @@ export default async function StudioPage({ params }: { params: Promise<{ slug: s
           The agent builder, knowledge base and chat are fully working today —{" "}
           <Link href="/agents">open your agents</Link>.
         </p>
-      </section>
+      </section>}
     </AppShell>
   );
 }
