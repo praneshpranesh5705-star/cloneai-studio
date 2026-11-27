@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   const { data } = await supabase.auth.getUser();
   if (!data.user) return NextResponse.json({ error: "Please sign in to use Voice Studio." }, { status: 401 });
 
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  const apiKey = (process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY2)?.trim();
   if (!apiKey) {
     return NextResponse.json(
       { error: "Voice Studio needs OPENAI_API_KEY in Vercel Project Settings → Environment Variables, then redeploy." },
