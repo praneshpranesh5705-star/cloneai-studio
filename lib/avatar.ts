@@ -49,7 +49,7 @@ export function avatarImageProvider(): ProviderStatus<AvatarImageProvider> {
   const gemini = Boolean(process.env.GEMINI_API_KEY?.trim());
   const openai = Boolean(process.env.OPENAI_API_KEY?.trim());
 
-  const geminiModel = process.env.AVATAR_IMAGE_MODEL?.trim() || "gemini-nano-banana-2.1";
+  const geminiModel = process.env.AVATAR_IMAGE_MODEL?.trim() || "gemini-3.1-flash-image";
   const openaiModel = process.env.AVATAR_IMAGE_MODEL?.trim() || "gpt-image-2.5-sunburst";
 
   if (forced === "openai" && openai) {
@@ -205,16 +205,24 @@ export function mapProviderError(
     };
   }
 
-  if (lower.includes("billing") || lower.includes("insufficient_quota") || lower.includes("quota")) {
+  if (
+    lower.includes("billing") ||
+    lower.includes("insufficient_quota") ||
+    lower.includes("quota exceeded") ||
+    lower.includes("free_tier") ||
+    lower.includes("limit: 0") ||
+    lower.includes("spend cap") ||
+    lower.includes("prepay")
+  ) {
     return {
-      message: `${label} says this account has no available credit. Add billing or credit to the ${label} account, then try again.`,
+      message: `${label} has no available image-generation quota for this project. Gemini image generation requires an enabled paid API tier for this model. Check Google AI Studio → Usage & Billing, link billing or wait for the quota reset, then try again.`,
       status: 402,
     };
   }
 
   if (status === 429) {
     return {
-      message: `${label} is rate limiting this key. Wait a moment and try again.`,
+      message: `${label} is temporarily rate limiting this project. Wait 30–60 seconds, avoid repeated taps, and try once. If it keeps happening, check Google AI Studio → Usage & Billing → Rate limits for the project used by GEMINI_API_KEY.`,
       status: 429,
     };
   }
@@ -249,8 +257,20 @@ export function errorDetail(body: unknown): string {
   const error = record.error;
   if (typeof error === "string") return error;
   if (error && typeof error === "object") {
-    const message = (error as Record<string, unknown>).message;
-    if (typeof message === "string") return message;
+    const errorRecord = error as Record<string, unknown>;
+    const message = typeof errorRecord.message === "string" ? errorRecord.message : "";
+    const status = typeof errorRecord.status === "string" ? errorRecord.status : "";
+    const details = Array.isArray(errorRecord.details)
+      ? errorRecord.details.map((item) => {
+          if (!item || typeof item !== "object") return String(item);
+          const detail = item as Record<string, unknown>;
+          const violations = Array.isArray(detail.violations)
+            ? detail.violations.map((violation) => JSON.stringify(violation)).join(" ")
+            : "";
+          return [detail["@type"], violations, JSON.stringify(detail)].filter(Boolean).join(" ");
+        }).join(" ")
+      : "";
+    return [message, status, details].filter(Boolean).join(" ");
   }
 
   const message = record.message;
