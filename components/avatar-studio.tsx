@@ -490,7 +490,7 @@ export default function AvatarStudio({ capabilities }: { capabilities: AvatarCap
           </>
         )}
         <br />
-        Images cost roughly $0.03–$0.05 each. Video is billed per second of output — a 5-second
+        Gemini 3.1 Flash Image costs about $0.067 per 1K image; higher resolutions cost more. Video is billed per second of output — a 5-second
         720p clip is about $0.35. Your API keys stay on the server and are never sent to the
         browser.
       </section>
