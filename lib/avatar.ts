@@ -28,7 +28,7 @@ export const VIDEO_SECONDS = 5;
 export const VIDEO_RESOLUTION = "720p";
 
 export type AvatarImageProvider = "gemini" | "openai";
-export type AvatarVideoProvider = "gemini";
+export type AvatarVideoProvider = "gemini" | "fal";
 
 export type ProviderStatus<P extends string> = {
   /** The provider that will be used, or null when none is configured. */
@@ -69,17 +69,21 @@ export function avatarImageProvider(): ProviderStatus<AvatarImageProvider> {
 }
 
 /**
- * Talking video is Gemini Omni only.
- *
- * This is not a shortcut: OpenAI's Sora 2 models and the whole /v1/videos API
- * were shut down on 2026-09-24, so there is no OpenAI video endpoint left to
- * call. Saying so plainly is better than offering a button that cannot work.
+ * Talking video can run through Gemini or fal.ai. Explicit AVATAR_VIDEO_PROVIDER
+ * wins; otherwise Gemini is preferred and fal.ai is the alternative.
  */
 export function avatarVideoProvider(): ProviderStatus<AvatarVideoProvider> {
-  const key = process.env.GEMINI_API_KEY?.trim();
-  const model = process.env.AVATAR_VIDEO_MODEL?.trim() || "gemini-omni-1.2-flash";
-  if (!key) return { provider: null, model, missing: ["GEMINI_API_KEY"] };
-  return { provider: "gemini", model, missing: [] };
+  const forced = process.env.AVATAR_VIDEO_PROVIDER?.trim().toLowerCase();
+  const gemini = Boolean(process.env.GEMINI_API_KEY?.trim());
+  const fal = Boolean(process.env.FAL_KEY?.trim());
+  const geminiModel = process.env.AVATAR_VIDEO_MODEL?.trim() || "gemini-omni-1.2-flash";
+  const falModel = process.env.FAL_VIDEO_MODEL?.trim() || "fal-ai/ovi/image-to-video";
+
+  if (forced === "fal" && fal) return { provider: "fal", model: falModel, missing: [] };
+  if (forced === "gemini" && gemini) return { provider: "gemini", model: geminiModel, missing: [] };
+  if (gemini) return { provider: "gemini", model: geminiModel, missing: [] };
+  if (fal) return { provider: "fal", model: falModel, missing: [] };
+  return { provider: null, model: falModel, missing: ["GEMINI_API_KEY", "FAL_KEY"] };
 }
 
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
