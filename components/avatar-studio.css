@@ -1,0 +1,24 @@
+.avatar-studio{display:grid;gap:18px}
+.avatar-card,.avatar-provider-note{max-width:1100px}
+.avatar-heading{display:flex;align-items:flex-start;gap:13px;margin-bottom:18px}
+.avatar-heading h2{font:600 17px var(--display);margin:0 0 5px}
+.avatar-heading .form-lead{margin:0}
+.avatar-tabs{display:flex;gap:6px;padding:4px;border:1px solid var(--line);border-radius:10px;background:#090c16;margin-bottom:20px}
+.avatar-tabs button{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;border:0;border-radius:7px;padding:11px 9px;background:transparent;color:#929bb2;font-size:12px}
+.avatar-tabs button.active{background:#28213f;color:#d8cbff}
+.avatar-textarea{width:100%;min-height:130px;border:1px solid #ffffff1b;border-radius:9px;background:#090c16;color:#f3f5ff;padding:13px;font:12px/1.7 var(--font);resize:vertical;outline:0}
+.avatar-textarea:focus,.avatar-fields select:focus{border-color:#987aff99;box-shadow:0 0 0 3px #8c6bff16}
+.avatar-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.avatar-fields select,.avatar-file{width:100%;min-height:43px;border:1px solid #ffffff1b;border-radius:9px;background:#090c16;color:#f3f5ff;padding:10px;font:12px var(--font)}
+.avatar-action{min-height:44px;justify-content:center;min-width:220px;margin-top:6px}
+.avatar-result{margin-top:20px;border:1px solid var(--line);border-radius:12px;padding:13px;background:#0c0e19}
+.avatar-result-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;font-size:12px}
+.avatar-result-head a{display:inline-flex;align-items:center;gap:6px;color:#c7b5ff;text-decoration:none}
+.avatar-result img{display:block;max-width:100%;max-height:680px;margin:0 auto;border-radius:9px}
+.avatar-result video{display:block;width:100%;max-height:600px;background:#000;border-radius:9px}
+.avatar-photo-preview{display:flex;align-items:center;gap:12px;margin:12px 0 18px;color:#aeb6ca;font-size:11px}
+.avatar-photo-preview img{width:76px;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.avatar-hint{display:flex;align-items:flex-start;gap:7px;color:#9ca5bb;font-size:11px;line-height:1.6;margin:8px 0 14px}
+.avatar-hint svg{flex:none;margin-top:1px}
+.avatar-disclaimer{color:#818ba2;font-size:10px;line-height:1.6;margin:18px 0 0}
+@media(max-width:650px){.avatar-fields{grid-template-columns:1fr}.avatar-action{width:100%}.avatar-tabs button{font-size:11px}}
