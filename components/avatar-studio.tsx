@@ -66,7 +66,18 @@ export default function AvatarStudio() {
     finally { setBusy(false); }
   }
 
-  async function useGeneratedAvatar() {\n    if (!imageUrl) return;\n    const response = await fetch(imageUrl);\n    const blob = await response.blob();\n    const file = new File([blob], "cloneai-avatar.png", { type: blob.type || "image/png" });\n    setPhoto(file);\n    setPhotoPreview(URL.createObjectURL(file));\n    setTab("video");\n    setError("");\n  }\n\n  async function generateVideo() {
+  async function useGeneratedAvatar() {
+    if (!imageUrl) return;
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+    const file = new File([blob], "cloneai-avatar.png", { type: blob.type || "image/png" });
+    setPhoto(file);
+    setPhotoPreview(URL.createObjectURL(file));
+    setTab("video");
+    setError("");
+  }
+
+  async function generateVideo() {
     if (!photo) { setError("Upload a photo to animate first."); return; }
     if (!script.trim()) { setError("Enter the words your avatar should speak."); return; }
     if (script.length > 1200) { setError("Keep the speaking script under 1,200 characters."); return; }
