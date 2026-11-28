@@ -1,6 +1,17 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+type VideoOutputPart = { type?: string; uri?: string };
+type VideoStep = { content?: VideoOutputPart[] };
+type VideoInteractionResponse = {
+  id?: string;
+  status?: string;
+  errors?: Array<{ message?: string }>;
+  output_video?: { uri?: string };
+  steps?: VideoStep[];
+  error?: { message?: string };
+};
+
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
@@ -44,7 +55,7 @@ export async function POST(request: Request) {
     }),
     signal: AbortSignal.timeout(55000),
   });
-  const result = await response.json().catch(() => ({}));
+  const result = await response.json().catch(() => ({})) as VideoInteractionResponse;
   if (!response.ok) {
     return NextResponse.json({ error: result?.error?.message || `Gemini video request failed (HTTP ${response.status}). Check that your Gemini project has paid-tier access to Gemini Omni Flash.` }, { status: response.status === 429 ? 429 : 502 });
   }
@@ -68,7 +79,7 @@ export async function GET(request: Request) {
   if (result.status === "failed") return NextResponse.json({ status: "failed", error: result.errors?.[0]?.message || "Video generation failed." });
   if (result.status !== "completed") return NextResponse.json({ status: "processing" });
 
-  const uri = result.output_video?.uri || result.steps?.flatMap((step: any) => step?.content || []).find((part: any) => part?.type === "video" && part?.uri)?.uri;
+  const uri = result.output_video?.uri || result.steps?.flatMap((step) => step.content || []).find((part) => part.type === "video" && part.uri)?.uri;
   const match = typeof uri === "string" ? uri.match(/\/files\/([A-Za-z0-9_-]+)/) : null;
   if (!match) return NextResponse.json({ error: "The video completed but no downloadable file was returned." }, { status: 502 });
   const fileId = match[1];
