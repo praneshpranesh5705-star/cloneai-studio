@@ -66,7 +66,7 @@ export default function AvatarStudio() {
     finally { setBusy(false); }
   }
 
-  async function generateVideo() {
+  async function useGeneratedAvatar() {\n    if (!imageUrl) return;\n    const response = await fetch(imageUrl);\n    const blob = await response.blob();\n    const file = new File([blob], "cloneai-avatar.png", { type: blob.type || "image/png" });\n    setPhoto(file);\n    setPhotoPreview(URL.createObjectURL(file));\n    setTab("video");\n    setError("");\n  }\n\n  async function generateVideo() {
     if (!photo) { setError("Upload a photo to animate first."); return; }
     if (!script.trim()) { setError("Enter the words your avatar should speak."); return; }
     if (script.length > 1200) { setError("Keep the speaking script under 1,200 characters."); return; }
@@ -123,7 +123,7 @@ export default function AvatarStudio() {
               <label className="field"><span>Image shape</span><select value={aspect} onChange={(e) => setAspect(e.target.value)}><option value="3:4">Portrait 3:4</option><option value="1:1">Square 1:1</option><option value="9:16">Vertical 9:16</option><option value="16:9">Landscape 16:9</option></select></label>
             </div>
             <button className="primary-button avatar-action" type="button" onClick={generateImage} disabled={busy || !prompt.trim()}>{busy ? <><LoaderCircle className="spin" size={16} /> Creating avatar…</> : <><Sparkles size={16} /> Generate avatar image</>}</button>
-            {imageUrl && <div className="avatar-result"><div className="avatar-result-head"><strong>Generated avatar</strong><a href={imageUrl} download="cloneai-avatar.png"><Download size={15} /> Download PNG</a></div><img src={imageUrl} alt="Generated AI avatar" /></div>}
+            {imageUrl && <div className="avatar-result"><div className="avatar-result-head"><strong>Generated avatar</strong><span className="avatar-result-links"><button type="button" onClick={useGeneratedAvatar}>Animate this avatar</button><a href={imageUrl} download="cloneai-avatar.png"><Download size={15} /> Download PNG</a></span></div><img src={imageUrl} alt="Generated AI avatar" /></div>}
           </>
         ) : (
           <>
