@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+type GeminiImagePart = {
+  inlineData?: { data?: string; mimeType?: string };
+  inline_data?: { data?: string; mime_type?: string };
+};
+type GeminiImageCandidate = { content?: { parts?: GeminiImagePart[] } };
+type GeminiImageResponse = { error?: { message?: string }; candidates?: GeminiImageCandidate[] };
+
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
@@ -28,13 +35,13 @@ export async function POST(request: Request) {
     }),
     signal: AbortSignal.timeout(55000),
   });
-  const result = await response.json().catch(() => ({}));
+  const result = await response.json().catch(() => ({})) as GeminiImageResponse;
   if (!response.ok) {
     const message = result?.error?.message || `Gemini image generation failed (HTTP ${response.status}).`;
     return NextResponse.json({ error: message }, { status: response.status === 429 ? 429 : 502 });
   }
-  const parts = result?.candidates?.flatMap((c: any) => c?.content?.parts || []) || [];
-  const image = parts.find((part: any) => part?.inlineData?.data || part?.inline_data?.data);
+  const parts = result?.candidates?.flatMap((candidate) => candidate.content?.parts || []) || [];
+  const image = parts.find((part) => part.inlineData?.data || part.inline_data?.data);
   const imageData = image?.inlineData?.data || image?.inline_data?.data;
   const mimeType = image?.inlineData?.mimeType || image?.inline_data?.mime_type || "image/png";
   if (!imageData) return NextResponse.json({ error: "The image model returned no image. Try a more specific prompt." }, { status: 502 });
