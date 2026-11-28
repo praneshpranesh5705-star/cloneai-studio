@@ -24,10 +24,11 @@ This repository used to be a UI mockup: every nav button showed a "coming soon" 
 | Demo mode when no API key is set | ✅ Working |
 | Voice Studio text-to-speech | 🟡 Implemented — requires a funded OpenAI API account and `OPENAI_API_KEY` |
 | Website Builder — generate, preview, revise, save, publish | ✅ Working — needs any one model key |
-| Avatar Studio | ⛔ Not built — the page says so |
+| Avatar Studio — avatar image | ✅ Working — needs `GEMINI_API_KEY` or `OPENAI_API_KEY` |
+| Avatar Studio — talking video | 🟡 Implemented — needs `GEMINI_API_KEY` with paid-tier access |
 | Billing / subscriptions | ⛔ Not built — usage is logged, not charged |
 
-Avatar Studio remains a deliberate placeholder that lists what it would require. It does not pretend to work. Website Builder is implemented; see [Website Builder](#website-builder) below.
+Website Builder and Avatar Studio are both implemented; see [Website Builder](#website-builder) and [Avatar Studio](#avatar-studio) below.
 
 ## Demo mode
 
@@ -117,7 +118,7 @@ app/
   settings/                     Account + which providers are configured
   usage/                        Model call log
   help/                          FAQ
-  studios/[slug]/               Voice Studio, Website Builder, and the Avatar placeholder
+  studios/[slug]/               Voice Studio, Avatar Studio, Website Builder
   p/[slug]/route.ts             Serves a published generated page, publicly
   setup/                        Shown when Supabase env vars are missing
   login/ signup/                Auth screens
@@ -127,6 +128,9 @@ app/
     voice/route.ts              Authenticated text-to-speech endpoint
     website-builder/route.ts    Generate a page from a brief (any provider)
     website-builder/save/       Save a draft, or publish it for public reading
+    avatar/image/               Generate an avatar portrait (Gemini or OpenAI)
+    avatar/video/               Start + poll a talking-avatar video job (Gemini Omni)
+    avatar/video/download/      Stream the finished MP4
     agents/route.ts             List + create
     agents/[id]/route.ts        Get + update + delete
     agents/[id]/documents/      List + create documents
@@ -139,6 +143,8 @@ lib/
   config.ts                     Env reading + provider registry (never throws)
   providers.ts                  OpenAI / OpenRouter / Anthropic / Gemini / demo, all streaming
   complete.ts                   Non-streaming completion for the studios, with budget + timeout
+  avatar.ts                     Avatar rules: provider choice, validation, error mapping
+  avatar-providers.ts           Gemini/OpenAI image + Gemini Omni video adapters
   website.ts                    Page validation, sanitising, titles and slugs
   retrieval.ts                  Chunking + TF-IDF scoring
   prompt.ts                     System prompt assembly + history trimming
@@ -154,6 +160,8 @@ tests/providers.test.ts          7 tests — all four provider adapters vs mock 
 tests/ai-path.test.ts            8 tests — turn alternation + provider resolution
 tests/website.test.ts           26 tests — page validation, sanitising, slugs
 tests/complete.test.ts           5 tests — completion wrapper vs a mock provider
+tests/avatar.test.ts            40 tests — avatar rules + both image adapters + video polling
+tests/e2e-avatar.mjs            6 checks against a built server
 tests/e2e-website.mjs           16 checks against a built server
 middleware.ts                   Session refresh + route protection
 AUDIT.md                        What was verified, and what was fixed
@@ -240,3 +248,43 @@ It works with whichever of `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `ANTHROPIC_AP
 **Security model.** `websites` is the only table with an anonymous read policy, and it is narrow: `published = true` rows are world-readable, drafts are owner-only. Owners alone can insert, update or delete, enforced by four RLS policies verified against real users (see `tests/sql/websites-rls.sql`).
 
 **Requires the `websites` table.** If you created your database before this feature existed, run `supabase/schema.sql` again — it is idempotent and adds the table without touching existing rows.
+
+
+## Avatar Studio
+
+Open **Studios → Avatar Studio** (`/studios/avatar`). Two tabs:
+
+**Avatar image.** Describe the portrait, pick a style and a shape, press **Generate avatar image**. The result can be downloaded as a PNG, or sent straight to the video tab with **Animate this avatar**.
+
+**Talking video.** Upload a photo (JPEG/PNG/WebP, under 4 MB), type the words the avatar should speak, press **Generate talking video**. The photo is downscaled and re-encoded in the browser before upload, so a large phone photo still works. Rendering takes 30–90 seconds; the panel shows elapsed time and then plays the MP4, which can be downloaded.
+
+### Which provider does what
+
+| Capability | Providers | Default model | Override |
+|---|---|---|---|
+| Avatar image | Gemini, OpenAI | `gemini-nano-banana-2.1` / `gpt-image-2.5-sunburst` | `AVATAR_IMAGE_MODEL` |
+| Talking video | Gemini only | `gemini-omni-1.2-flash` | `AVATAR_VIDEO_MODEL` |
+
+Gemini is preferred for images when both keys are present, because it takes an explicit aspect ratio. Set `AVATAR_IMAGE_PROVIDER=openai` to force the other. Forcing a provider whose key is missing falls back to the one that is configured rather than failing.
+
+**Why video is Gemini-only.** OpenAI's Sora 2 models and the entire `/v1/videos` API were shut down on 2026-09-24, so there is no OpenAI video endpoint left to call. Offering a button that could not work would be worse than saying so.
+
+### What the panel tells you
+
+The page resolves both capabilities on the server before rendering, so it states plainly which one is connected instead of letting you find out by pressing a button:
+
+- **Connected** — a green check naming the model that will be used.
+- **Not connected** — an amber notice naming the exact environment variable to add.
+
+Failures are reported in the panel, never as a crash: a rejected key, an account with no credit, a rate limit, a model your key cannot use, a content-policy refusal, a timeout, and a job that finishes without a video file each get their own message.
+
+### Cost
+
+Images are roughly **$0.03–$0.05** each. Video is billed per second of output: a 5-second 720p clip is about **$0.35** on Gemini Omni 1.2 Flash. Talking video has no free tier — it needs paid-tier Gemini access. Set a hard spend limit in the provider console before using it.
+
+### Limits
+
+- **Video is 5 seconds at 720p, portrait.** Longer or higher-resolution output costs proportionally more; change `VIDEO_SECONDS` / `VIDEO_RESOLUTION` in `lib/avatar.ts` if you want that.
+- **Nothing is stored.** Generated images and videos are returned to the browser and not saved to Supabase or disk. Download what you want to keep.
+- **No lip-sync guarantee.** The model is asked to synchronise mouth movement to the script; exact wording and sync quality vary between runs.
+- **Consent is your responsibility.** The panel says so, but nothing enforces it. Use only photos of yourself or people who have agreed.
