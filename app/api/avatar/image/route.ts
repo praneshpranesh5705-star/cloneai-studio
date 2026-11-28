@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     headers: { "Content-Type": "application/json", "x-goog-api-key": key },
     body: JSON.stringify({
       contents: [{ role: "user", parts: [{ text: `Generate one high-quality AI avatar portrait. Style: ${style}. Aspect ratio: ${aspectRatio}. Prompt: ${prompt}. Create the image itself, not a description. Do not add text or watermarks.` }] }],
-      generationConfig: { responseModalities: ["IMAGE"], imageConfig: { aspectRatio } },
+      generationConfig: { responseModalities: ["TEXT", "IMAGE"], imageConfig: { aspectRatio } },
     }),
     signal: AbortSignal.timeout(55000),
   });
