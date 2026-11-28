@@ -6,8 +6,8 @@ export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) return NextResponse.json({ error: "Please sign in to use Avatar Studio." }, { status: 401 });
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user) return NextResponse.json({ error: "Please sign in to use Avatar Studio." }, { status: 401 });
 
   const key = process.env.GEMINI_API_KEY?.trim();
   if (!key) return NextResponse.json({ error: "Add GEMINI_API_KEY in Vercel Environment Variables, then redeploy." }, { status: 503 });
@@ -35,8 +35,8 @@ export async function POST(request: Request) {
   }
   const parts = result?.candidates?.flatMap((c: any) => c?.content?.parts || []) || [];
   const image = parts.find((part: any) => part?.inlineData?.data || part?.inline_data?.data);
-  const data = image?.inlineData?.data || image?.inline_data?.data;
+  const imageData = image?.inlineData?.data || image?.inline_data?.data;
   const mimeType = image?.inlineData?.mimeType || image?.inline_data?.mime_type || "image/png";
-  if (!data) return NextResponse.json({ error: "The image model returned no image. Try a more specific prompt." }, { status: 502 });
-  return NextResponse.json({ image: data, mimeType });
+  if (!imageData) return NextResponse.json({ error: "The image model returned no image. Try a more specific prompt." }, { status: 502 });
+  return NextResponse.json({ image: imageData, mimeType });
 }
