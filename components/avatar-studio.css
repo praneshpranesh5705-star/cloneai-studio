@@ -4,7 +4,7 @@
 .avatar-heading h2{font:600 17px var(--display);margin:0 0 5px}
 .avatar-heading .form-lead{margin:0}
 .avatar-tabs{display:flex;gap:6px;padding:4px;border:1px solid var(--line);border-radius:10px;background:#090c16;margin-bottom:20px}
-.avatar-tabs button{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;border:0;border-radius:7px;padding:11px 9px;background:transparent;color:#929bb2;font-size:12px}
+.avatar-tabs button{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;border:0;border-radius:7px;padding:11px 9px;background:transparent;color:#929bb2;font-size:12px;cursor:pointer}
 .avatar-tabs button.active{background:#28213f;color:#d8cbff}
 .avatar-textarea{width:100%;min-height:130px;border:1px solid #ffffff1b;border-radius:9px;background:#090c16;color:#f3f5ff;padding:13px;font:12px/1.7 var(--font);resize:vertical;outline:0}
 .avatar-textarea:focus,.avatar-fields select:focus{border-color:#987aff99;box-shadow:0 0 0 3px #8c6bff16}
@@ -23,4 +23,20 @@
 .avatar-disclaimer{color:#818ba2;font-size:10px;line-height:1.6;margin:18px 0 0}
 @media(max-width:650px){.avatar-fields{grid-template-columns:1fr}.avatar-action{width:100%}.avatar-tabs button{font-size:11px}}
 
-.avatar-result-links{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.avatar-result-links button{border:0;background:transparent;color:#c7b5ff;font:inherit;font-size:11px;cursor:pointer;padding:0}
+.avatar-result-links{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.avatar-result-links button{border:0;background:transparent;color:#c7b5ff;font:inherit;font-size:11px;cursor:pointer;padding:0}
+.avatar-result-links button:disabled{color:#5d6478;cursor:not-allowed}
+
+/* Shown when a capability has no provider key: says what to add, not "coming soon". */
+.avatar-blocked{display:flex;align-items:flex-start;gap:10px;border:1px solid #6b4a1f;border-radius:10px;background:#1d1608;padding:13px 14px;margin-bottom:18px;color:#e8c98a;font-size:11px;line-height:1.65}
+.avatar-blocked svg{flex:none;margin-top:1px;color:#e0a94a}
+.avatar-blocked strong{display:block;color:#f2d9a4;font-size:12px;margin-bottom:3px}
+.avatar-blocked p{margin:0}
+.avatar-blocked code{background:#2a2010;border-radius:4px;padding:1px 5px;font-size:10px;color:#f0d7a6}
+
+.avatar-provider-note{line-height:1.9}
+.avatar-provider-note code{font-size:10px}
+.avatar-ok{color:#5fd39a;vertical-align:-2px;margin-right:4px}
+.avatar-warn{color:#e0a94a;vertical-align:-2px;margin-right:4px}
+
+.website-notice{display:flex;align-items:center;gap:7px}
