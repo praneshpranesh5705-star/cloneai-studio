@@ -1,20 +1,57 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientOrNull } from "@/lib/supabase/server";
+import { avatarVideoProvider } from "@/lib/avatar";
+import { downloadGeminiVideo } from "@/lib/avatar-providers";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function GET(request: Request) {
-  const supabase = await createClient();
+  const supabase = await createClientOrNull();
+  if (!supabase) {
+    return NextResponse.json(
+      {
+        error:
+          "This deployment has no database configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, then redeploy.",
+      },
+      { status: 503 },
+    );
+  }
   const { data } = await supabase.auth.getUser();
-  if (!data.user) return NextResponse.json({ error: "Please sign in to download this video." }, { status: 401 });
-  const key = process.env.GEMINI_API_KEY?.trim();
-  if (!key) return NextResponse.json({ error: "GEMINI_API_KEY is not configured." }, { status: 503 });
+  if (!data.user) {
+    return NextResponse.json({ error: "Please sign in to download this video." }, { status: 401 });
+  }
+
+  const { provider, missing } = avatarVideoProvider();
+  if (!provider) {
+    return NextResponse.json(
+      { error: "Talking video needs a Gemini key. Add " + missing.join(" or ") + "." },
+      { status: 503 },
+    );
+  }
+
   const id = new URL(request.url).searchParams.get("id") || "";
-  if (!/^[A-Za-z0-9_-]{4,100}$/.test(id)) return NextResponse.json({ error: "Invalid video file ID." }, { status: 400 });
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/files/${id}:download?alt=media`, {
-    headers: { "x-goog-api-key": key }, cache: "no-store", signal: AbortSignal.timeout(55000),
-  });
-  if (!response.ok) return NextResponse.json({ error: "Could not download the generated video." }, { status: 502 });
-  return new Response(response.body, { headers: { "Content-Type": "video/mp4", "Content-Disposition": 'attachment; filename="cloneai-talking-avatar.mp4"', "Cache-Control": "private, no-store" } });
+  if (!/^[A-Za-z0-9_-]{4,100}$/.test(id)) {
+    return NextResponse.json({ error: "Invalid video file ID." }, { status: 400 });
+  }
+
+  try {
+    const key = process.env.GEMINI_API_KEY?.trim() || "";
+    const upstream = await downloadGeminiVideo(id, key);
+
+    return new Response(upstream.body, {
+      headers: {
+        "Content-Type": "video/mp4",
+        "Content-Disposition": 'attachment; filename="cloneai-talking-avatar.mp4"',
+        "Cache-Control": "private, no-store",
+      },
+    });
+  } catch (cause) {
+    const error = cause as Error & { status?: number };
+    return NextResponse.json(
+      { error: error?.message || "Could not download the generated video." },
+      { status: error?.status ?? 502 },
+    );
+  }
 }

@@ -24,3 +24,17 @@ export async function createClient() {
     },
   });
 }
+
+/**
+ * Same client, but returns null instead of throwing when Supabase is not
+ * configured.
+ *
+ * Route handlers use this so an unconfigured deployment answers with a clear
+ * 503 ("add these variables") rather than an opaque 500 from a thrown error
+ * deep inside the auth call. Pages keep using createClient(), because they
+ * redirect to /setup instead.
+ */
+export async function createClientOrNull() {
+  if (!supabaseUrl() || !supabaseKey()) return null;
+  return createClient();
+}
