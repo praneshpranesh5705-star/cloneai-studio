@@ -10,6 +10,7 @@ import WebsiteBuilder from "@/components/website-builder";
 import AvatarStudio from "@/components/avatar-studio";
 
 export const dynamic = "force-dynamic";
+// Avatar Studio is rendered here so /studios/avatar uses the live generator UI.
 
 const STUDIOS: Record<string, { title: string; blurb: string; needs: string[] }> = {
   voice: {
