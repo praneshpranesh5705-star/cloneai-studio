@@ -99,7 +99,6 @@ export default function AvatarStudio({ capabilities }: { capabilities: AvatarCap
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
-  const [elapsed, setElapsed] = useState(0);
 
   const cancelled = useRef(false);
 
@@ -127,7 +126,7 @@ export default function AvatarStudio({ capabilities }: { capabilities: AvatarCap
     }
     setBusy(true);
     setError("");
-    setStatus("Generating your avatar image\u2026");
+    setStatus("Generating your avatar image…");
     setImageUrl("");
     try {
       const response = await fetch("/api/avatar/image", {
@@ -176,14 +175,13 @@ export default function AvatarStudio({ capabilities }: { capabilities: AvatarCap
     setBusy(true);
     setError("");
     setVideoUrl("");
-    setElapsed(0);
     cancelled.current = false;
 
     try {
-      setStatus("Preparing your photo\u2026");
+      setStatus("Preparing your photo…");
       const encoded = await imageToJpeg(photo);
 
-      setStatus("Starting video generation\u2026");
+      setStatus("Starting video generation…");
       const start = await fetch("/api/avatar/video", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -200,8 +198,7 @@ export default function AvatarStudio({ capabilities }: { capabilities: AvatarCap
         if (cancelled.current) return;
 
         const seconds = Math.min((attempt + 1) * (POLL_INTERVAL_MS / 1000), 180);
-        setElapsed(seconds);
-        setStatus(`Rendering your talking avatar\u2026 ${seconds}s`);
+        setStatus(`Rendering your talking avatar… ${seconds}s`);
 
         const check = await fetch(`/api/avatar/video?id=${encodeURIComponent(id)}`, {
           cache: "no-store",
@@ -221,7 +218,7 @@ export default function AvatarStudio({ capabilities }: { capabilities: AvatarCap
 
       setStatus("");
       setError(
-        "This is taking longer than expected. The job may still be rendering \u2014 try again in a minute.",
+        "This is taking longer than expected. The job may still be rendering — try again in a minute.",
       );
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Video generation failed.");
@@ -282,7 +279,7 @@ export default function AvatarStudio({ capabilities }: { capabilities: AvatarCap
                   <strong>Image generation is not connected</strong>
                   <p>
                     Add <code>{capabilities.image.missing.join("</code> or <code>")}</code> in
-                    Vercel \u2192 Settings \u2192 Environment Variables, then redeploy.
+                    Vercel → Settings → Environment Variables, then redeploy.
                   </p>
                 </div>
               </div>
@@ -298,7 +295,7 @@ export default function AvatarStudio({ capabilities }: { capabilities: AvatarCap
                 maxLength={1500}
                 value={prompt}
                 onChange={(event) => setPrompt(event.target.value)}
-                placeholder="Example: A friendly professional technology presenter, mid-shot portrait, navy blazer, clean modern studio background, soft cinematic lighting\u2026"
+                placeholder="Example: A friendly professional technology presenter, mid-shot portrait, navy blazer, clean modern studio background, soft cinematic lighting…"
               />
             </label>
 
@@ -331,7 +328,7 @@ export default function AvatarStudio({ capabilities }: { capabilities: AvatarCap
             >
               {busy ? (
                 <>
-                  <LoaderCircle className="spin" size={16} /> Creating avatar\u2026
+                  <LoaderCircle className="spin" size={16} /> Creating avatar…
                 </>
               ) : (
                 <>
@@ -367,7 +364,7 @@ export default function AvatarStudio({ capabilities }: { capabilities: AvatarCap
                   <strong>Talking video is not connected</strong>
                   <p>
                     Add <code>{capabilities.video.missing.join("</code> or <code>")}</code> in
-                    Vercel \u2192 Settings \u2192 Environment Variables, then redeploy. Talking video uses
+                    Vercel → Settings → Environment Variables, then redeploy. Talking video uses
                     Gemini Omni, which needs paid-tier Gemini access.
                   </p>
                 </div>
@@ -407,7 +404,7 @@ export default function AvatarStudio({ capabilities }: { capabilities: AvatarCap
                 maxLength={1200}
                 value={script}
                 onChange={(event) => setScript(event.target.value)}
-                placeholder="Hello! Welcome to my channel. Today I want to show you something exciting\u2026"
+                placeholder="Hello! Welcome to my channel. Today I want to show you something exciting…"
               />
             </label>
 
@@ -424,7 +421,7 @@ export default function AvatarStudio({ capabilities }: { capabilities: AvatarCap
             >
               {busy ? (
                 <>
-                  <LoaderCircle className="spin" size={16} /> Generating video\u2026
+                  <LoaderCircle className="spin" size={16} /> Generating video…
                 </>
               ) : (
                 <>
@@ -493,7 +490,7 @@ export default function AvatarStudio({ capabilities }: { capabilities: AvatarCap
           </>
         )}
         <br />
-        Images cost roughly $0.03\u2013$0.05 each. Video is billed per second of output \u2014 a 5-second
+        Images cost roughly $0.03–$0.05 each. Video is billed per second of output — a 5-second
         720p clip is about $0.35. Your API keys stay on the server and are never sent to the
         browser.
       </section>
